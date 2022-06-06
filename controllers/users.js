@@ -10,7 +10,7 @@ module.exports.getUsers = (_req, res, next) => {
 };
 
 module.exports.getUser = (req, res, next) => {
-  User.findById(req.params.userId)
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
         return next(new NotFoundError('Запрашиваемый пользователь не найден'));
@@ -18,6 +18,10 @@ module.exports.getUser = (req, res, next) => {
       return res.send({ data: user });
     })
     .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new ValidationError('Введен некорректный id'));
+        return;
+      }
       if (err.code === 500) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
@@ -29,25 +33,32 @@ module.exports.getUser = (req, res, next) => {
 module.exports.createUser = (req, res, next) => {
   const { name, about, avatar } = req.body;
 
-  User.create({ name, about, avatar })
-    .then((user) => res.send({
-      name: user.name,
-      about: user.about,
-      avatar: user.avatar,
+  User.countDocuments()
+    .then((count) => User.create({
+      id: count,
+      name,
+      about,
+      avatar,
     }))
+    .then((user) => res.send(user))
     .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new ValidationError('Введены некорректные данные'));
+        return;
+      }
       if (err.code === 500) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
         next(err);
       }
     });
+  // });
 };
 
 module.exports.updateUserInfo = (req, res, next) => {
   const { name, about } = req.body;
 
-  User.findByIdAndUpdate(req.params.userId, { name, about }, {
+  User.findByIdAndUpdate(req.user._id, { name, about }, {
     new: true,
     runValidators: true,
   })
@@ -69,7 +80,7 @@ module.exports.updateUserInfo = (req, res, next) => {
 module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
-  User.findByIdAndUpdate(req.params.userId, { avatar }, {
+  User.findByIdAndUpdate(req.user._id, { avatar }, {
     new: true,
     runValidators: true,
   })
