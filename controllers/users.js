@@ -1,9 +1,8 @@
 const User = require('../models/user');
 const { NotFoundError } = require('../errors/NotFoundError');
-const { ValidationError } = require('../errors/ValidationError');
-const { ServerError } = require('../errors/ServerError');
 
 const notValidCode = 400;
+const serverErrCode = 500;
 
 module.exports.getUsers = (_req, res, next) => {
   User.find({})
@@ -12,18 +11,18 @@ module.exports.getUsers = (_req, res, next) => {
 };
 
 module.exports.getUser = (req, res, next) => {
-  User.findById(req.user._id)
+  User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
         return next(new NotFoundError('Запрашиваемый пользователь не найден'));
       }
-      return res.send({ data: user });
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(notValidCode).send({ message: 'Введен некорректый id' });
       }
-      return new ServerError('Произошла ошибка на сервере, попробуйте еще раз');
+      return res.status(serverErrCode).send({ message: 'Введен некорректый id' });
     });
 };
 
@@ -42,11 +41,11 @@ module.exports.createUser = (req, res) => {
       if (err.name === 'ValidationError') {
         return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
       }
-      return new ServerError('Произошла ошибка на сервере, попробуйте еще раз');
+      return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
     });
 };
 
-module.exports.updateUserInfo = (req, res, next) => {
+module.exports.updateUserInfo = (req, res) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { name, about }, {
@@ -57,14 +56,13 @@ module.exports.updateUserInfo = (req, res, next) => {
       if (!user) {
         return new NotFoundError('Запрашиваемый пользователь не найден');
       }
-      return res.send({ data: user });
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new ValidationError('Данные некорректны');
-      } else {
-        next(err);
+        return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
       }
+      return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
     });
 };
 
@@ -79,13 +77,12 @@ module.exports.updateUserAvatar = (req, res, next) => {
       if (!user) {
         return next(new NotFoundError('Запрашиваемый пользователь не найден'));
       }
-      return res.send({ data: user });
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError('Данные некорректны'));
-      } else {
-        next(err);
+        return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
       }
+      return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
     });
 };

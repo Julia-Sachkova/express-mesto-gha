@@ -3,21 +3,16 @@ const { NotFoundError } = require('../errors/NotFoundError');
 const { ServerError } = require('../errors/ServerError');
 
 const serverErrCode = 500;
+const notValidCode = 400;
 
 module.exports.getCard = (req, res, next) => {
   Card.find({})
     .populate('owner')
-    .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.code === serverErrCode) {
-        next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
-      } else {
-        next(err);
-      }
-    });
+    .then((card) => res.send(card))
+    .catch((err) => next(err));
 };
 
-module.exports.createCard = (req, res, next) => {
+module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
@@ -28,11 +23,10 @@ module.exports.createCard = (req, res, next) => {
       owner: card.owner,
     }))
     .catch((err) => {
-      if (err.code === serverErrCode) {
-        next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
-      } else {
-        next(err);
+      if (err.name === 'ValidationError') {
+        return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
       }
+      return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
     });
 };
 
@@ -40,9 +34,12 @@ module.exports.deleteCard = (req, res, next) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+        next(new NotFoundError('Карточка не найдена'));
+      } else {
+        card.remove()
+          .then(() => res.send(card));
       }
-      return res.send({ data: card });
+      return res.send(card);
     })
     .catch((err) => {
       if (err.code === serverErrCode) {
@@ -63,7 +60,7 @@ module.exports.likeCard = (req, res, next) => {
       if (!card) {
         return new NotFoundError('Карточка не найдена');
       }
-      return res.send({ data: card });
+      return res.send(card);
     })
     .catch((err) => {
       if (err.code === serverErrCode) {
@@ -84,7 +81,7 @@ module.exports.dislikeCard = (req, res, next) => {
       if (!card) {
         return new NotFoundError('Карточка не найдена');
       }
-      return res.send({ data: card });
+      return res.send(card);
     })
     .catch((err) => {
       if (err.code === serverErrCode) {
