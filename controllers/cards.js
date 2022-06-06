@@ -2,12 +2,14 @@ const Card = require('../models/card');
 const { NotFoundError } = require('../errors/NotFoundError');
 const { ServerError } = require('../errors/ServerError');
 
+const serverErrCode = 500;
+
 module.exports.getCard = (req, res, next) => {
   Card.find({})
     .populate('owner')
     .then((card) => res.send({ data: card }))
     .catch((err) => {
-      if (err.code === 500) {
+      if (err.code === serverErrCode) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
         next(err);
@@ -26,7 +28,7 @@ module.exports.createCard = (req, res, next) => {
       owner: card.owner,
     }))
     .catch((err) => {
-      if (err.code === 500) {
+      if (err.code === serverErrCode) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
         next(err);
@@ -43,7 +45,7 @@ module.exports.deleteCard = (req, res, next) => {
       return res.send({ data: card });
     })
     .catch((err) => {
-      if (err.code === 500) {
+      if (err.code === serverErrCode) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
         next(err);
@@ -59,12 +61,12 @@ module.exports.likeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+        return new NotFoundError('Карточка не найдена');
       }
       return res.send({ data: card });
     })
     .catch((err) => {
-      if (err.code === 500) {
+      if (err.code === serverErrCode) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
         next(err);
@@ -80,12 +82,12 @@ module.exports.dislikeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+        return new NotFoundError('Карточка не найдена');
       }
       return res.send({ data: card });
     })
     .catch((err) => {
-      if (err.code === 500) {
+      if (err.code === serverErrCode) {
         next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
       } else {
         next(err);

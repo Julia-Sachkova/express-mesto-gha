@@ -3,6 +3,8 @@ const { NotFoundError } = require('../errors/NotFoundError');
 const { ValidationError } = require('../errors/ValidationError');
 const { ServerError } = require('../errors/ServerError');
 
+const notValidCode = 400;
+
 module.exports.getUsers = (_req, res, next) => {
   User.find({})
     .then((user) => res.send(user))
@@ -19,18 +21,13 @@ module.exports.getUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError('Введен некорректный id'));
-        return;
+        return res.status(notValidCode).send({ message: 'Введен некорректый id' });
       }
-      if (err.code === 500) {
-        next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
-      } else {
-        next(err);
-      }
+      return new ServerError('Произошла ошибка на сервере, попробуйте еще раз');
     });
 };
 
-module.exports.createUser = (req, res, next) => {
+module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.countDocuments()
@@ -43,16 +40,10 @@ module.exports.createUser = (req, res, next) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError('Введены некорректные данные'));
-        return;
+        return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
       }
-      if (err.code === 500) {
-        next(new ServerError('Произошла ошибка на сервере, попробуйте еще раз'));
-      } else {
-        next(err);
-      }
+      return new ServerError('Произошла ошибка на сервере, попробуйте еще раз');
     });
-  // });
 };
 
 module.exports.updateUserInfo = (req, res, next) => {
@@ -64,13 +55,13 @@ module.exports.updateUserInfo = (req, res, next) => {
   })
     .then((user) => {
       if (!user) {
-        return next(new NotFoundError('Запрашиваемый пользователь не найден'));
+        return new NotFoundError('Запрашиваемый пользователь не найден');
       }
       return res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError('Данные некорректны'));
+        throw new ValidationError('Данные некорректны');
       } else {
         next(err);
       }
