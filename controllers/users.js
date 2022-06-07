@@ -1,13 +1,17 @@
 const User = require('../models/user');
 
-const notValidCode = 400;
-const serverErrCode = 500;
-const notFoundCode = 404;
+const {
+  notValidCode,
+  serverErrCode,
+  notFoundCode,
+} = require('../utils/codeConstants');
 
-module.exports.getUsers = (_req, res, next) => {
+module.exports.getUsers = (_req, res) => {
   User.find({})
     .then((user) => res.send(user))
-    .catch((err) => next(err));
+    .catch(() => {
+      res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
+    });
 };
 
 module.exports.getUser = (req, res) => {
@@ -30,13 +34,11 @@ module.exports.getUser = (req, res) => {
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
-  User.countDocuments()
-    .then((count) => User.create({
-      id: count,
-      name,
-      about,
-      avatar,
-    }))
+  User.create({
+    name,
+    about,
+    avatar,
+  })
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -56,8 +58,9 @@ module.exports.updateUserInfo = (req, res) => {
     .then((user) => {
       if (!user) {
         res.status(notFoundCode).send({ message: 'Запрашиваемый пользователь не найден' });
+        return;
       }
-      return res.send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -77,8 +80,9 @@ module.exports.updateUserAvatar = (req, res) => {
     .then((user) => {
       if (!user) {
         res.status(notFoundCode).send({ message: 'Запрашиваемый пользователь не найден' });
+        return;
       }
-      return res.send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {

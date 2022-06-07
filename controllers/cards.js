@@ -1,28 +1,30 @@
 const Card = require('../models/card');
 
-const serverErrCode = 500;
-const notValidCode = 400;
-const notFoundCode = 404;
+const {
+  notValidCode,
+  serverErrCode,
+  notFoundCode,
+} = require('../utils/codeConstants');
 
-module.exports.getCard = (req, res, next) => {
+module.exports.getCard = (_req, res) => {
   Card.find({})
     .populate('owner')
     .then((card) => res.send(card))
-    .catch((err) => next(err));
+    .catch(() => {
+      res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
+    });
 };
 
 module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
-  Card.countDocuments()
-    .then((count) => Card.create({
-      name,
-      link,
-      owner,
-      id: count,
-    })
-      .then((card) => res.send(card)))
+  Card.create({
+    name,
+    link,
+    owner,
+  })
+    .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
