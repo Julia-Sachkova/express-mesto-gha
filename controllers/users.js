@@ -1,8 +1,8 @@
 const User = require('../models/user');
-const { NotFoundError } = require('../errors/NotFoundError');
 
 const notValidCode = 400;
 const serverErrCode = 500;
+const notFoundCode = 404;
 
 module.exports.getUsers = (_req, res, next) => {
   User.find({})
@@ -10,19 +10,20 @@ module.exports.getUsers = (_req, res, next) => {
     .catch((err) => next(err));
 };
 
-module.exports.getUser = (req, res, next) => {
+module.exports.getUser = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return next(new NotFoundError('Запрашиваемый пользователь не найден'));
+        res.status(notFoundCode).send({ message: 'Запрашиваемый пользователь не найден' });
+        return;
       }
-      return res.send(user);
+      res.send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'CastError') {
         return res.status(notValidCode).send({ message: 'Введен некорректый id' });
       }
-      return res.status(serverErrCode).send({ message: 'Введен некорректый id' });
+      return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
     });
 };
 
@@ -54,7 +55,7 @@ module.exports.updateUserInfo = (req, res) => {
   })
     .then((user) => {
       if (!user) {
-        return new NotFoundError('Запрашиваемый пользователь не найден');
+        res.status(notFoundCode).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       return res.send(user);
     })
@@ -66,7 +67,7 @@ module.exports.updateUserInfo = (req, res) => {
     });
 };
 
-module.exports.updateUserAvatar = (req, res, next) => {
+module.exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { avatar }, {
@@ -75,7 +76,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
   })
     .then((user) => {
       if (!user) {
-        return next(new NotFoundError('Запрашиваемый пользователь не найден'));
+        res.status(notFoundCode).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       return res.send(user);
     })
