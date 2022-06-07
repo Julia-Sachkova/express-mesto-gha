@@ -41,8 +41,8 @@ module.exports.deleteCard = (req, res) => {
       res.send(card);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(notValidCode).send({ message: 'Введены некорректные данные' });
+      if (err.name === 'CastError') {
+        return res.status(notValidCode).send({ message: 'Введен некорректный id' });
       }
       return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
     });
