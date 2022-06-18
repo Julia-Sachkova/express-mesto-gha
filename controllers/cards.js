@@ -4,6 +4,7 @@ const {
   notValidCode,
   serverErrCode,
   notFoundCode,
+  noAccess,
 } = require('../utils/codeConstants');
 
 module.exports.getCard = (_req, res) => {
@@ -34,13 +35,36 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  const cardDelete = () => {
+    Card.findByIdAndRemove(req.params.cardId)
+      .then((card) => {
+        if (!card) {
+          res.status(notFoundCode).send({ message: 'Карточка не найдена' });
+          return;
+        }
+        res.send(card);
+      })
+      .catch((err) => {
+        if (err.name === 'CastError') {
+          return res.status(notValidCode).send({ message: 'Введен некорректный id' });
+        }
+        return res.status(serverErrCode).send({ message: 'Произошла ошибка на сервере, попробуйте еще раз' });
+      });
+  };
+
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
         res.status(notFoundCode).send({ message: 'Карточка не найдена' });
         return;
       }
-      res.send(card);
+
+      if (req.user._id !== card.owner.toString()) {
+        res.status(noAccess).send({ message: 'Вы не можете удалить данную карточку' });
+        return;
+      }
+
+      cardDelete();
     })
     .catch((err) => {
       if (err.name === 'CastError') {
