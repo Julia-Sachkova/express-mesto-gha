@@ -1,4 +1,4 @@
-function errorsHandler(err, req, res) {
+function errorsHandler(err, req, res, next) {
   const { statusCode = 500, message } = err;
 
   res
@@ -8,6 +8,7 @@ function errorsHandler(err, req, res) {
         ? `На сервере произошла ошибка ${err}`
         : message,
     });
+  next();
 }
 
 module.exports = errorsHandler;

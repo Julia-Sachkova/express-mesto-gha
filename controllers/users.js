@@ -38,7 +38,7 @@ module.exports.login = (req, res, next) => {
                 sameSite: true,
                 maxAge: 3600000 * 24 * 7,
               })
-              .ssend({ token });
+              .send({ token });
           } else {
             throw new NotValidJwt('Неверные почта или пароль');
           }
@@ -52,7 +52,7 @@ module.exports.login = (req, res, next) => {
 
 module.exports.getUsers = (_req, res, next) => {
   User.find({})
-    .then((user) => res.send(user))
+    .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       next(err);
     });
@@ -100,25 +100,35 @@ module.exports.createUser = (req, res, next) => {
   } = req.body;
 
   if (!email || !password) {
-    throw new NotValidJwt('Неверные почта или пароль');
+    throw new NotValidJwt('Пароль или почта не могут быть пустыми');
   }
 
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name,
-      about,
-      avatar,
-      email,
-      password: hash,
-    }))
-    .then((userData) => res.send(userData))
+  User.findOne({ email })
+    .then((user) => {
+      if (user) {
+        throw new AlreadyExistData('Пользователь с таким email уже существует');
+      } else {
+        bcrypt.hash(password, 10)
+          .then((hash) => User.create({
+            name,
+            about,
+            avatar,
+            email,
+            password: hash,
+          }))
+          .then((userData) => res.send(userData))
+          .catch((err) => {
+            if (err.name === 'ValidationError') {
+              next(new NotValidCode('Введены некорректные данные'));
+            }
+            if (err.code === 11000) {
+              next(new AlreadyExistData('Пользователь с таким email уже существует'));
+            }
+            next(err);
+          });
+      }
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new NotValidCode('Введены некорректные данные'));
-      }
-      if (err.code === 11000) {
-        next(new AlreadyExistData('Пользователь с таким email уже существует'));
-      }
       next(err);
     });
 };

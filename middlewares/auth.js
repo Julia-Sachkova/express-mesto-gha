@@ -9,7 +9,7 @@ const auth = (req, res, next) => {
   const { cookies } = req.cookies;
 
   if (!cookies) {
-    throw new NotValidJwt('Авторизация не успешна');
+    throw new NotValidJwt('Требуется авторизация');
   } else {
     const token = cookies.jwt;
     let playload;
