@@ -17,12 +17,12 @@ router.post('/cards', celebrate({
   }),
 }), createCard);
 router.put('/cards/:cardId/likes', celebrate({
-  body: Joi.object().keys({
+  params: Joi.object().keys({
     cardId: Joi.string().hex().length(20),
   }),
 }), likeCard);
 router.delete('/cards/:cardId/likes', celebrate({
-  body: Joi.object().keys({
+  params: Joi.object().keys({
     cardId: Joi.string().hex().length(20),
   }),
 }), dislikeCard);

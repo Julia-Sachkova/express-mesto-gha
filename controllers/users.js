@@ -22,25 +22,25 @@ module.exports.login = (req, res, next) => {
     .select('+password')
     .then((user) => {
       if (!user) {
-        throw new NotFound('Пользователь не найден');
+        throw new NotValidJwt('Неверные почта или пароль');
       } else {
         bcrypt.compare(password, user.password, ((err, valid) => {
           if (err) {
             throw new NoAccess('Ошибка доступа');
           }
 
-          if (valid) {
+          if (!valid) {
+            throw new NotValidJwt('Неверные почта или пароль');
+          } else {
             const token = jwt.sign({ id: user._id }, JWT_TOKEN);
 
-            res
-              .cockie('jwt', token, {
+            return res
+              .cookie('jwt', token, {
                 httpOnly: true,
                 sameSite: true,
                 maxAge: 3600000 * 24 * 7,
               })
               .send({ token });
-          } else {
-            throw new NotValidJwt('Неверные почта или пароль');
           }
         }));
       }
@@ -100,7 +100,7 @@ module.exports.createUser = (req, res, next) => {
   } = req.body;
 
   if (!email || !password) {
-    throw new NotValidJwt('Пароль или почта не могут быть пустыми');
+    throw new NotValidCode('Пароль или почта не могут быть пустыми');
   }
 
   User.findOne({ email })
@@ -116,7 +116,13 @@ module.exports.createUser = (req, res, next) => {
             email,
             password: hash,
           }))
-          .then((userData) => res.send(userData))
+          .then((userData) => res.send({
+            name: userData.name,
+            about: userData.about,
+            avatar: userData.avatar,
+            email: userData.email,
+            id: userData._id,
+          }))
           .catch((err) => {
             if (err.name === 'ValidationError') {
               next(new NotValidCode('Введены некорректные данные'));
