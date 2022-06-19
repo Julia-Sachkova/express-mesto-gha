@@ -2,11 +2,14 @@ const jwt = require('jsonwebtoken');
 
 const JWT_TOKEN = 'secret-jwt-token';
 
-module.exports.auth = (req, res, next) => {
+const NoAccess = require('../errors/NoAccess');
+const NotValidJwt = require('../errors/NotValidJwt');
+
+const auth = (req, res, next) => {
   const { cookies } = req.cookies;
 
   if (!cookies) {
-    res.status(403).send({ error: 'Авторизация не успешна' });
+    throw new NotValidJwt('Авторизация не успешна');
   } else {
     const token = cookies.jwt;
     let playload;
@@ -14,10 +17,12 @@ module.exports.auth = (req, res, next) => {
     try {
       playload = jwt.verify(token, JWT_TOKEN);
     } catch (err) {
-      res.status(401).send({ error: 'token is not valid' });
+      next(new NoAccess('token is not valid'));
     }
 
     req.user = playload;
-    next();
+    return next();
   }
 };
+
+module.exports = auth;
