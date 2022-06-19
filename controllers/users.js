@@ -38,7 +38,7 @@ module.exports.login = (req, res, next) => {
               .cookie('jwt', token, {
                 httpOnly: true,
                 sameSite: true,
-                maxAge: 3600000 * 24 * 7,
+                expiresIn: 3600000 * 24 * 7,
               })
               .send({ token });
           }
@@ -80,7 +80,7 @@ module.exports.getMe = (req, res, next) => {
       if (!user) {
         throw new NotFound('Пользователь не найден');
       }
-      res.send(user);
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
