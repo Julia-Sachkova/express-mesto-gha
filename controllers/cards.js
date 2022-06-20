@@ -81,7 +81,7 @@ module.exports.likeCard = (req, res, next) => {
       res.send(card);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'CastError') {
         next(new NotValidCode('Введен некорректный id'));
       }
       next(err);
@@ -101,7 +101,7 @@ module.exports.dislikeCard = (req, res, next) => {
       res.send(card);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'CastError') {
         next(new NotValidCode('Введен некорректный id'));
       }
       next(err);
