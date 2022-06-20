@@ -32,13 +32,14 @@ module.exports.login = (req, res, next) => {
           if (!valid) {
             throw new NotValidJwt('Неверные почта или пароль');
           } else {
-            const token = jwt.sign({ id: user._id }, JWT_TOKEN);
+            const token = jwt.sign({ _id: user._id }, JWT_TOKEN, {
+              expiresIn: '7d',
+            });
 
             return res
               .cookie('jwt', token, {
                 httpOnly: true,
                 sameSite: true,
-                expiresIn: 3600000 * 24 * 7,
               })
               .send({ token });
           }
@@ -62,9 +63,9 @@ module.exports.getUser = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        throw new NotFound('Пользователь не найден');
+        return next(new NotFound('Пользователь не найден'));
       }
-      res.send(user);
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -83,9 +84,6 @@ module.exports.getMe = (req, res, next) => {
       return res.send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        throw new NotValidCode('Введен некорректый id');
-      }
       next(err);
     });
 };
