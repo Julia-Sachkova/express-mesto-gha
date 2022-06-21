@@ -34,10 +34,8 @@ module.exports.createCard = (req, res, next) => {
 module.exports.deleteCard = (req, res, next) => {
   const cardDelete = () => {
     Card.findByIdAndRemove(req.params.cardId)
+      .orFail(new NotFound('Карточка не найдена'))
       .then((card) => {
-        if (!card) {
-          throw new NotFound('Карточка не найдена');
-        }
         res.send(card);
       })
       .catch((err) => {
@@ -49,11 +47,8 @@ module.exports.deleteCard = (req, res, next) => {
   };
 
   Card.findById(req.params.cardId)
+    .orFail(new NotFound('Карточка не найдена'))
     .then((card) => {
-      if (!card) {
-        throw new NotFound('Карточка не найдена');
-      }
-
       if (req.user._id !== card.owner.toString()) {
         throw new NoAccess('Вы не можете удалить данную карточку');
       }
@@ -74,10 +69,8 @@ module.exports.likeCard = (req, res, next) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(new NotFound('Карточка не найдена'))
     .then((card) => {
-      if (!card) {
-        throw new NotFound('Карточка не найдена');
-      }
       res.send(card);
     })
     .catch((err) => {
@@ -94,10 +87,8 @@ module.exports.dislikeCard = (req, res, next) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(new NotFound('Карточка не найдена'))
     .then((card) => {
-      if (!card) {
-        throw new NotFound('Карточка не найдена');
-      }
       res.send(card);
     })
     .catch((err) => {

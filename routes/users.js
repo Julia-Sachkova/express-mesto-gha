@@ -7,6 +7,7 @@ const {
   updateUserAvatar,
   getMe,
 } = require('../controllers/users');
+const { linkReg } = require('../utils/constants');
 
 router.get('/users', getUsers);
 router.get('/users/me', getMe);
@@ -23,7 +24,7 @@ router.patch('/users/me', celebrate({
 }), updateUserInfo);
 router.patch('/users/me/avatar', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[a-zA-Z\d-]+\.[\w\d\-.~:/?#[\]@!$&'()*+,;=]{2,}#?$/),
+    avatar: Joi.string().pattern(linkReg),
   }),
 }), updateUserAvatar);
 

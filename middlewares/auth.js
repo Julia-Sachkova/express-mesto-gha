@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_TOKEN = 'secret-jwt-token';
+const { JWT_TOKEN } = require('../utils/constants');
 
 const NoAccess = require('../errors/NoAccess');
 const NotValidJwt = require('../errors/NotValidJwt');

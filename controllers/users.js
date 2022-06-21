@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const JWT_TOKEN = 'secret-jwt-token';
+const { JWT_TOKEN } = require('../utils/constants');
 
 const AlreadyExistData = require('../errors/AlreadyExistData');
 const NoAccess = require('../errors/NoAccess');
@@ -61,11 +61,9 @@ module.exports.getUsers = (_req, res, next) => {
 
 module.exports.getUser = (req, res, next) => {
   User.findById(req.params.userId)
+    .orFail(new NotFound('Пользователь не найден'))
     .then((user) => {
-      if (!user) {
-        return next(new NotFound('Пользователь не найден'));
-      }
-      return res.send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -77,11 +75,9 @@ module.exports.getUser = (req, res, next) => {
 
 module.exports.getMe = (req, res, next) => {
   User.findById(req.user._id)
+    .orFail(new NotFound('Пользователь не найден'))
     .then((user) => {
-      if (!user) {
-        throw new NotFound('Пользователь не найден');
-      }
-      return res.send(user);
+      res.send(user);
     })
     .catch((err) => {
       next(err);
@@ -144,10 +140,8 @@ module.exports.updateUserInfo = (req, res, next) => {
     new: true,
     runValidators: true,
   })
+    .orFail(new NotFound('Пользователь не найден'))
     .then((user) => {
-      if (!user) {
-        throw new NotFound('Пользователь не найден');
-      }
       res.send(user);
     })
     .catch((err) => {
@@ -165,10 +159,8 @@ module.exports.updateUserAvatar = (req, res, next) => {
     new: true,
     runValidators: true,
   })
+    .orFail(new NotFound('Пользователь не найден'))
     .then((user) => {
-      if (!user) {
-        throw new NotFound('Пользователь не найден');
-      }
       res.send(user);
     })
     .catch((err) => {

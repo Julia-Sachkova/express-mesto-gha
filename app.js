@@ -6,6 +6,9 @@ const bodyParser = require('body-parser');
 const auth = require('./middlewares/auth');
 const errorsHandler = require('./middlewares/errorsHandler');
 
+const NotFound = require('./errors/NotFound');
+const { linkReg } = require('./utils/constants');
+
 const app = express();
 const { PORT = 3000 } = process.env;
 
@@ -26,7 +29,7 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[a-zA-Z\d-]+\.[\w\d\-.~:/?#[\]@!$&'()*+,;=]{2,}#?$/),
+    avatar: Joi.string().pattern(linkReg),
     email: Joi.string().required().email(),
     password: Joi.string().required(),
   }),
@@ -37,8 +40,8 @@ app.use(auth);
 app.use(require('./routes/users'));
 app.use(require('./routes/cards'));
 
-app.all('*', (_req, res) => {
-  res.status(404).send({ message: 'Страница не найдена' });
+app.all('*', (_req, _res, next) => {
+  next(new NotFound('Страница не найдена'));
 });
 
 app.use(errors());
